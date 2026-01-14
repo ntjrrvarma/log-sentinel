@@ -1,78 +1,60 @@
-# 🛡️ LogSentinel (Phase 1)
-**A Fault-Tolerant, Distributed Log Ingestion System**
+# 🛡️ LogSentinel: From Python Script to Kubernetes Cluster
+
+**A complete journey of building a Fault-Tolerant, Distributed Log Ingestion System.**
+* **Author:** Rahul N R
+* **Tech Stack:** Python, Redis, Docker, Kubernetes (Minikube), Terraform.
+
+---
 
 ## 📖 Project Overview
-LogSentinel is a distributed system designed to simulate a scalable logging infrastructure. It decouples log generation from processing using an **Event-Driven Architecture**.
-* **Producers (Agents):** Multiple Python containers generating synthetic logs.
-* **Broker (Redis):** Acts as a buffer/queue to ensure zero data loss.
-* **Consumer (Police):** A separate Python service that processes logs and alerts on "CRITICAL" events.
-
-## 🏗️ Architecture
-**[ Log Agent 1 ]** -->  \
-**[ Log Agent 2 ]** -->   **[ Redis Queue ]** -->  **[ Police (Consumer) ]**
-**[ Log Agent 3 ]** -->  /
-*(Scaled horizontally to N replicas)*
+LogSentinel is a simulation of a high-traffic logging infrastructure. It demonstrates how modern SREs build systems that are:
+1.  **Decoupled:** Producers and Consumers don't talk directly (using Redis Queue).
+2.  **Scalable:** Can handle traffic spikes by creating more containers automatically.
+3.  **Resilient:** If a component dies, the system heals itself.
 
 ---
 
-## 🚀 Key Concepts Mastered
-| Concept | Implementation |
-| :--- | :--- |
-| **Containerization** | Packaged Python apps into lightweight Docker images (`python:3.12-slim`). |
-| **Microservices** | Split the app into Producer (`app.py`), Broker (`redis`), and Consumer (`consumer.py`). |
-| **Service Discovery** | Used Docker Networks (`sentinel-net`) allows containers to talk by name (`redis-store`). |
-| **Orchestration** | Managed the entire stack using `docker-compose`. |
-| **Horizontal Scaling** | Scaled log agents dynamically using `docker-compose up --scale log-agent=5`. |
-| **Fault Tolerance** | Decoupled systems using Redis; if the Consumer crashes, logs remain safe in the queue. |
+## 🏗️ Phase 1: Docker & Distributed Systems
+**Goal:** Containerize the application and set up basic networking.
 
----
+### 🧩 Components
+1.  **Log Agent (`app.py`):** A Python script that generates synthetic logs (INFO, WARNING, CRITICAL) and pushes them to a Redis List.
+2.  **Redis Store:** A message broker that buffers logs.
+3.  **Consumer (`consumer.py`):** A "Police" service that reads from Redis and alerts on CRITICAL errors.
 
-## 🛠️ Project Structure
-```text
-log-sentinel/
-├── app.py             # Log Producer (Generates logs -> Pushes to Redis)
-├── consumer.py        # Log Consumer (Reads Redis -> Alerts on CRITICAL)
-├── Dockerfile         # Blueprint to build the Python image
-├── docker-compose.yml # Orchestration file (Services, Networks, Dependencies)
-├── requirements.txt   # Dependencies (redis library)
-└── README.md          # Documentation
+### 💡 Key Concepts Learned
+* **Docker Networking:** Created `sentinel-net` so containers can talk by name (`host='redis-store'`).
+* **Docker Compose:** Orchestrated the entire stack with one command (`docker-compose up`).
+* **Persistence:** Used Redis to ensure logs aren't lost even if the Python app crashes.
 
-⚡ How to Run
-1. Prerequisites
-Docker & Docker Compose installed.
-
-2. Start the System (Daemon Mode)
-This starts Redis and the Log Agent.
-
-Bash
-
-docker-compose up -d
-3. Scale the Producers (Simulate High Load)
-Spin up 5 concurrent log agents generating traffic.
-
-Bash
-
+### ⚡ Commands
+```bash
+# Start the stack
 docker-compose up -d --scale log-agent=5
-4. Start the Consumer (The "Police")
-Run the consumer script inside the network to process logs.
 
-Bash
+# Check logs
+docker logs -f redis-store
 
-# Note: Ensure network name matches `docker network ls` (e.g., log-sentinel_sentinel-net)
-docker run -it --network log-sentinel_sentinel-net log-sentinel-log-agent python consumer.py
-5. Verify Resilience
-Check Queue: Exec into Redis and run LLEN log_queue.
+☸️ Phase 2: Kubernetes Migration (The Big Boss)Goal: Move from a single machine (Docker Compose) to a Cluster (Kubernetes) for Orchestration.🚀 Why Kubernetes?Docker Compose is great for local dev, but Kubernetes provides Self-Healing and Auto-Scaling.🛠️ Architecture ChangesFeatureDocker ComposeKubernetes (Minikube)Process ManagerContainerDeployment (Restarts dead pods)NetworkingAutomatic BridgeService (ClusterIP to provide stable DNS)ScalingManual (--scale)Horizontal Pod Autoscaler (HPA)📂 Manifests Explainedk8s/redis.yaml:Deployment: Keeps 1 Redis Pod running.Service: Maps the DNS name redis-store to the Pod's IP. Crucial for Service Discovery.k8s/agent.yaml:Deployment: Manages the Python Agents.Resources: Defined CPU limits (200m) so HPA knows when to scale.📈 Auto-Scaling (The "Black Friday" Test)We implemented HPA to watch CPU usage.Metric: If CPU usage > 50%.Action: Scale from 1 replica to max 10 replicas.Stress Test: We updated app.py to burn CPU, and observed pods scaling from 2 -> 8 -> 10 automatically.⚡ CommandsBash# Apply Configs
+kubectl apply -f k8s/
 
-Stop Consumer: Logs will pile up in Redis (No data loss).
+# Watch Auto-Scaling
+kubectl get hpa --watch
 
-Restart Consumer: It picks up exactly where it left off.
+# Update Image (Rolling Update)
+kubectl set image deployment/log-agent-deploy agent=log-sentinel:v3
+🏗️ Phase 3: Infrastructure as Code (Terraform)Goal: Stop "ClickOps". Automate infrastructure creation using Code.💡 Why Terraform?Instead of typing docker run, we write main.tf. This allows us to version control our infrastructure just like our application code.🛠️ What we builtA Terraform script to provision a Docker Container (Nginx) automatically.Learned the workflow: Init -> Plan -> Apply.⚡ CommandsBashcd terraform-lab
+terraform init   # Download providers
+terraform plan   # Preview changes
+terraform apply  # Create infrastructure
 
-🧪 Technical Learnings (SRE Perspective)
-Immutability: Docker images act as immutable artifacts. Version tagging (v1, v2) allows safe rollbacks.
+🎓 Summary of Skills Mastered
+Containerization: Docker, Dockerfile best practices.
 
-Buffers are critical: Direct API calls fail if the receiver is down. Using a Queue (Redis) acts as a shock absorber.
+Orchestration: Kubernetes Pods, Deployments, Services, HPA.
 
-Service Names as DNS: In Docker networks, we don't use IPs. We use service names (redis-store) which resolve automatically.
+Infrastructure as Code: Terraform basics.
 
+Scripting: Python for Automation & Stress Testing.
 
----
+Git Ops: Handling large files, .gitignore, and commit discipline.
