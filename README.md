@@ -28,14 +28,48 @@ LogSentinel is a simulation of a high-traffic logging infrastructure. It demonst
 * **Persistence:** Used Redis to ensure logs aren't lost even if the Python app crashes.
 
 ### ⚡ Commands
-```bash
+
 # Start the stack
 docker-compose up -d --scale log-agent=5
 
 # Check logs
 docker logs -f redis-store
 
-☸️ Phase 2: Kubernetes Migration (The Big Boss)Goal: Move from a single machine (Docker Compose) to a Cluster (Kubernetes) for Orchestration.🚀 Why Kubernetes?Docker Compose is great for local dev, but Kubernetes provides Self-Healing and Auto-Scaling.🛠️ Architecture ChangesFeatureDocker ComposeKubernetes (Minikube)Process ManagerContainerDeployment (Restarts dead pods)NetworkingAutomatic BridgeService (ClusterIP to provide stable DNS)ScalingManual (--scale)Horizontal Pod Autoscaler (HPA)📂 Manifests Explainedk8s/redis.yaml:Deployment: Keeps 1 Redis Pod running.Service: Maps the DNS name redis-store to the Pod's IP. Crucial for Service Discovery.k8s/agent.yaml:Deployment: Manages the Python Agents.Resources: Defined CPU limits (200m) so HPA knows when to scale.📈 Auto-Scaling (The "Black Friday" Test)We implemented HPA to watch CPU usage.Metric: If CPU usage > 50%.Action: Scale from 1 replica to max 10 replicas.Stress Test: We updated app.py to burn CPU, and observed pods scaling from 2 -> 8 -> 10 automatically.⚡ CommandsBash# Apply Configs
+
+
+## ☸️ Phase 2: Kubernetes Migration (The Big Boss)
+**Goal:** Move from a single machine (Docker Compose) to a Cluster (Kubernetes) for Orchestration.
+
+### 🚀 Why Kubernetes?
+Docker Compose is great for local dev, but Kubernetes provides Self-Healing and Auto-Scaling.
+
+### 🛠️ Architecture Changes
+
+Feature,Docker Compose,Kubernetes (Minikube)
+Process Manager,Container,Deployment (Restarts dead pods)
+Networking,Automatic Bridge,Service (ClusterIP to provide stable DNS)
+Scaling,Manual (--scale),Horizontal Pod Autoscaler (HPA)
+
+
+### 📂 Manifests Explained
+# k8s/redis.yaml:
+Deployment: Keeps 1 Redis Pod running.
+Service: Maps the DNS name redis-store to the Pod's IP. Crucial for Service Discovery.
+
+# k8s/agent.yaml:
+Deployment: Manages the Python Agents.
+Resources: Defined CPU limits (200m) so HPA knows when to scale.
+
+### 📈 Auto-Scaling (The "Black Friday" Test)
+We implemented HPA to watch CPU usage.
+
+Metric: If CPU usage > 50%.
+Action: Scale from 1 replica to max 10 replicas.
+Stress Test: We updated app.py to burn CPU, and observed pods scaling from 2 -> 8 -> 10 automatically.
+
+### ⚡ Commands
+
+# Apply Configs
 kubectl apply -f k8s/
 
 # Watch Auto-Scaling
@@ -43,18 +77,29 @@ kubectl get hpa --watch
 
 # Update Image (Rolling Update)
 kubectl set image deployment/log-agent-deploy agent=log-sentinel:v3
-🏗️ Phase 3: Infrastructure as Code (Terraform)Goal: Stop "ClickOps". Automate infrastructure creation using Code.💡 Why Terraform?Instead of typing docker run, we write main.tf. This allows us to version control our infrastructure just like our application code.🛠️ What we builtA Terraform script to provision a Docker Container (Nginx) automatically.Learned the workflow: Init -> Plan -> Apply.⚡ CommandsBashcd terraform-lab
+
+## 🏗️ Phase 3: Infrastructure as Code (Terraform)
+**Goal:** Stop "ClickOps". Automate infrastructure creation using Code.
+
+### 💡 Why Terraform?
+Instead of typing docker run, we write main.tf. This allows us to version control our infrastructure just like our application code.
+
+### 🛠️ What we built
+A Terraform script to provision a Docker Container (Nginx) automatically.
+
+### Learned the workflow: Init -> Plan -> Apply.
+
+### ⚡ Commands
+
+cd terraform-lab
 terraform init   # Download providers
 terraform plan   # Preview changes
 terraform apply  # Create infrastructure
 
-🎓 Summary of Skills Mastered
+
+### 🎓 Summary of Skills Mastered
 Containerization: Docker, Dockerfile best practices.
-
 Orchestration: Kubernetes Pods, Deployments, Services, HPA.
-
 Infrastructure as Code: Terraform basics.
-
 Scripting: Python for Automation & Stress Testing.
-
 Git Ops: Handling large files, .gitignore, and commit discipline.
