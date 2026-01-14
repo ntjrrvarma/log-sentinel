@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deploy
+spec:
+  replicas: 1  # How many clones you want?
+  selector:
+    matchLabels:
+      app: redis-store
+  template:  # This is the Pod Blueprint
+    metadata:
+      labels:
+        app: redis-store
+    spec:
+      containers:
+      - name: redis
+        image: redis:alpine
+        ports:
+        - containerPort: 6379

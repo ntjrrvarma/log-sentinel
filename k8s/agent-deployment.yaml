@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-agent-deploy
+spec:
+  replicas: 2  # Start with 2 agents
+  selector:
+    matchLabels:
+      app: log-agent
+  template:
+    metadata:
+      labels:
+        app: log-agent
+    spec:
+      containers:
+      - name: agent
+        image: log-sentinel:v2  # Namma build panna image
+        imagePullPolicy: Never  # (Important for Minikube local images)
+        env:
+        - name: LOG_LEVEL
+          value: "INFO"

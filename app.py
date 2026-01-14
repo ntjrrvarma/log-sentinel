@@ -1,26 +1,31 @@
 import time
 import random
 import os
-import redis  # New Import
+import redis
+import math  # New import
 
-# Connect to Redis Container by NAME
-# Hostname 'redis-store' works because they are in the same Docker Network
+# Connect to Redis using the Service Hostname
 r = redis.Redis(host='redis-store', port=6379, db=0)
 
-def generate_log():
-    print(f"LogSentinel Agent PID: {os.getpid()} Connecting to Redis...", flush=True)
+def generate_stress():
+    print(f"🔥 STRESS AGENT PID: {os.getpid()} Starting CPU Burn...", flush=True)
     while True:
-        levels = ["INFO", "WARNING", "ERROR", "CRITICAL"]
-        log_msg = f"{random.choice(levels)}: System load at {random.randint(10, 100)}% - {time.ctime()}"
+        # 1. Heavy Calculation to spike CPU
+        x = 0.0001
+        for i in range(1000000):
+            x += math.sqrt(i)
         
-        # Push to Redis List named 'log_queue'
+        # 2. Push log after burning CPU
+        levels = ["INFO", "WARNING", "ERROR", "CRITICAL"]
+        log_msg = f"{random.choice(levels)}: CPU Burn at {x:.2f} - {time.ctime()}"
+        
         try:
             r.lpush('log_queue', log_msg)
-            print(f"Sent to Redis: {log_msg}", flush=True)
-        except redis.ConnectionError:
-            print("Redis Connection Failed! Retrying...", flush=True)
+            # print(f"Sent: {log_msg}", flush=True) # Comment print to run faster
+        except:
+            pass
             
-        time.sleep(2)
+        # No Sleep! Run as fast as possible!
 
 if __name__ == "__main__":
-    generate_log()
+    generate_stress()

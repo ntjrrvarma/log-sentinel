@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-agent-deploy
+spec:
+  replicas: 2  # Start with 2 agents (Horizontal Scaling)
+  selector:
+    matchLabels:
+      app: log-agent
+  template:
+    metadata:
+      labels:
+        app: log-agent
+    spec:
+      containers:
+      - name: agent
+        image: log-sentinel:v2 # Image we built in Step 0
+        imagePullPolicy: Never  # Use local image, don't try to download from internet
+        env:
+        - name: LOG_LEVEL
+          value: "INFO"
+          # --- NEW SECTION STARTS ---
+        resources:
+          requests:
+            cpu: "100m"  # 10% of a CPU core
+          limits:
+            cpu: "200m"  # Max 20% of a CPU core
+        # --- NEW SECTION ENDS ---

@@ -1,0 +1,34 @@
+# 1. The Deployment (Keeps Redis Running)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-store
+  template:
+    metadata:
+      labels:
+        app: redis-store
+    spec:
+      containers:
+      - name: redis
+        image: redis:alpine
+        ports:
+        - containerPort: 6379
+
+---
+# 2. The Service (Stable Name for Python to connect)
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-store  # <--- IDHU DHAAN MUKKIYAM (Python uses this hostname)
+spec:
+  selector:
+    app: redis-store # Connects to pods with this label
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379

@@ -1,0 +1,32 @@
+cat <<EOF > .gitignore
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+terraform.tfstate.d/
+
+# --- IDE Settings (VS Code) ---
+.vscode/
+*.code-workspace
+
+# --- OS Junk ---
+.DS_Store
+Thumbs.db
+
+# --- Binaries & Large Files (Important) ---
+*.exe
+*.bin
+minikube-linux-amd64
+kubectl
+
+# --- Logs ---
+*.log
+EOF
