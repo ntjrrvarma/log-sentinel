@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  # Service 1: Database
+  redis-store:
+    image: redis:alpine
+    container_name: redis-store
+    networks:
+      - sentinel-net
+
+  # Service 2: Log Producer (Our Python App)
+  log-agent:
+    build: .
+    depends_on:
+      - redis-store  # Wait for Redis to start first
+    environment:
+      - LOG_LEVEL=INFO
+    networks:
+      - sentinel-net
+
+# Define the shared network
+networks:
+  sentinel-net:
+    driver: bridge
