@@ -4,6 +4,21 @@ import os
 import redis
 import math  # New import
 
+# app.py (Add this function at the top)
+
+def get_log_level_id(level):
+    """
+    Simple logic to convert Log Level to a numeric ID.
+    Used for filtering priority.
+    """
+    levels = {
+        "INFO": 1,
+        "WARNING": 2,
+        "ERROR": 3,
+        "CRITICAL": 4
+    }
+    return levels.get(level, 0) # Return 0 if unknown
+
 # Connect to Redis using the Service Hostname
 r = redis.Redis(host='redis-store', port=6379, db=0)
 
