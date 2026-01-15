@@ -1,24 +1,49 @@
 version: '3.8'
 
 services:
-  # Service 1: Database
-  redis-store:
-    image: redis:alpine
-    container_name: redis-store
-    networks:
-      - sentinel-net
-
-  # Service 2: Log Producer (Our Python App)
-  log-agent:
+  app:
     build: .
+    container_name: stress_agent
+    ports:
+      - "8000:8000"
     depends_on:
-      - redis-store  # Wait for Redis to start first
-    environment:
-      - LOG_LEVEL=INFO
+      - redis
     networks:
-      - sentinel-net
+      - monitoring_net
 
-# Define the shared network
+  redis:
+    image: "redis:alpine"
+    container_name: redis_store
+    networks:
+      - monitoring_net
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus_server
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring_net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_ui
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    # --- NEW: PERSISTENCE BLOCK ---
+    volumes:
+      - grafana_storage:/var/lib/grafana
+    networks:
+      - monitoring_net
+
+# --- NEW: VOLUME DEFINITION ---
+volumes:
+  grafana_storage: # This creates a permanent space on your disk
+
 networks:
-  sentinel-net:
+  monitoring_net:
     driver: bridge

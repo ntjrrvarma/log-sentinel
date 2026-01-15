@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s # Scrape every 5 seconds (Fast for demo purposes)
+
+scrape_configs:
+  - job_name: 'log_sentinel_python'
+    static_configs:
+      - targets: ['app:8000'] # Connects to the 'app' container on port 8000

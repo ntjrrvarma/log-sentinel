@@ -1,1 +1,4 @@
 redis
+prometheus-client
+pytest
+mock  # We need this to fake Redis during testing
