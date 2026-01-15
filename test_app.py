@@ -1,21 +1,18 @@
 import unittest
-from unittest.mock import MagicMock, patch
 import sys
+from unittest.mock import MagicMock, patch
 import os
 
-# Add parent directory to path so we can import app
+# --- NUCLEAR MOCKING STRATEGY ---
+# We manually force these into sys.modules. 
+# This tricks Python into thinking these libraries are installed permanently for this script.
+# We do this BEFORE importing app.
+sys.modules["redis"] = MagicMock()
+sys.modules["prometheus_client"] = MagicMock()
+
+# Now we can safely import app
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# --- THE FIX ---
-# We mock BOTH 'redis' and 'prometheus_client' before importing app.
-# This tricks Python into thinking they are installed, preventing ModuleNotFoundError.
-modules_to_patch = {
-    'redis': MagicMock(),
-    'prometheus_client': MagicMock()
-}
-
-with patch.dict('sys.modules', modules_to_patch):
-    import app
+import app
 
 class TestLogLogic(unittest.TestCase):
     
@@ -24,15 +21,15 @@ class TestLogLogic(unittest.TestCase):
         self.assertTrue(hasattr(app, 'chaos_consumer'))
         self.assertTrue(hasattr(app, 'generate_stress'))
 
-    @patch('app.r') # Mock the Redis object inside app
-    def test_queue_logic(self, mock_redis):
+    def test_queue_logic(self):
         """Test if Redis logic is reachable"""
-        # Simulate a Redis queue length
-        mock_redis.llen.return_value = 50
+        # Since we mocked the whole module 'redis' above, app.r is already a Mock.
+        # We just need to verify the logic flow doesn't crash.
         
-        # Test our code's access to it
-        # Since we mocked redis at the module level, app.r might be a MagicMock.
-        # We ensure the logic flow works without crashing.
+        # Setup the mock to return a value
+        app.r.llen.return_value = 50
+        
+        # Run the line we want to test
         if app.r:
             val = app.r.llen('log_queue')
             self.assertEqual(val, 50)
