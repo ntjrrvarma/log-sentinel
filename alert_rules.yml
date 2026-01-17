@@ -1,0 +1,21 @@
+groups:
+  - name: log_sentinel_alerts
+    rules:
+      # Rule 1: The original (Only fires if queue is explicitly 0)
+      - alert: RedisQueueDown
+        expr: app_redis_queue_depth == 0
+        for: 10s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis Queue is Empty (or Connection Lost)"
+
+      # Rule 2: The New Safety Net (Fires if the App crashes/stops)
+      - alert: InstanceDown
+        expr: up == 0
+        for: 10s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service is DOWN"
+          description: "The container {{ $labels.instance }} is not responding to Prometheus."
